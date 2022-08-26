@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Copy</string>
+    <string name="long_text">
+       棒棒糖（Lollipop，Android 5.0），棉花糖（Marshmallow，Android 6.0），牛轧糖（Nougat，Android 7.0）。
+    </string>
+    <string name="copy">复制</string>
+    <string name="select_all">全选</string>
+</resources>
