@@ -68,22 +68,22 @@ public class SelectableTextHelper {
 
     private void init() {
         mTextView.setText(mTextView.getText(), TextView.BufferType.SPANNABLE);
-        mTextView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                showSelectView(mTouchX, mTouchY);
-                return true;
-            }
-        });
+//        mTextView.setOnLongClickListener(new View.OnLongClickListener() {
+//            @Override
+//            public boolean onLongClick(View v) {
+//                showSelectView(mTouchX, mTouchY);
+//                return true;
+//            }
+//        });
 
-        mTextView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                mTouchX = (int) event.getX();
-                mTouchY = (int) event.getY();
-                return false;
-            }
-        });
+//        mTextView.setOnTouchListener(new View.OnTouchListener() {
+//            @Override
+//            public boolean onTouch(View v, MotionEvent event) {
+//                mTouchX = (int) event.getX();
+//                mTouchY = (int) event.getY();
+//                return false;
+//            }
+//        });
 
         mTextView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -184,26 +184,26 @@ public class SelectableTextHelper {
         }
     }
 
-    public void showSelectView(int x, int y) {
-        hideSelectView();
-        resetSelectionInfo();
-        isHide = false;
-        if (mStartHandle == null) mStartHandle = new CursorHandle(true);
-        if (mEndHandle == null) mEndHandle = new CursorHandle(false);
-
-        int startOffset = TextLayoutUtil.getPreciseOffset(mTextView, x, y);
-        int endOffset = startOffset + DEFAULT_SELECTION_LENGTH;
-        if (mTextView.getText() instanceof Spannable) {
-            mSpannable = (Spannable) mTextView.getText();
-        }
-        if (mSpannable == null || startOffset >= mTextView.getText().length()) {
-            return;
-        }
-        selectText(startOffset, endOffset);
-        showCursorHandle(mStartHandle);
-        showCursorHandle(mEndHandle);
-        mOperateWindow.show();
-    }
+//    public void showSelectView(int x, int y) {
+//        hideSelectView();
+//        resetSelectionInfo();
+//        isHide = false;
+//        if (mStartHandle == null) mStartHandle = new CursorHandle(true);
+//        if (mEndHandle == null) mEndHandle = new CursorHandle(false);
+//
+//        int startOffset = TextLayoutUtil.getPreciseOffset(mTextView, x, y);
+//        int endOffset = startOffset + DEFAULT_SELECTION_LENGTH;
+//        if (mTextView.getText() instanceof Spannable) {
+//            mSpannable = (Spannable) mTextView.getText();
+//        }
+//        if (mSpannable == null || startOffset >= mTextView.getText().length()) {
+//            return;
+//        }
+//        selectText(startOffset, endOffset);
+//        showCursorHandle(mStartHandle);
+//        showCursorHandle(mEndHandle);
+//        mOperateWindow.show();
+//    }
 
     public void showSelectViewAll() {
         hideSelectView();
@@ -221,6 +221,24 @@ public class SelectableTextHelper {
             return;
         }
         selectText(startOffset, endOffset);
+
+        if(mTextView.getLayout() == null){
+            final ViewTreeObserver vto  = mTextView.getViewTreeObserver();
+            vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    if(mTextView.getLayout() != null){
+                        doShow();
+                    }
+                    vto.removeOnGlobalLayoutListener(this);
+                }
+            });
+        }else{
+            doShow();
+        }
+    }
+
+    private void doShow(){
         showCursorHandle(mStartHandle);
         showCursorHandle(mEndHandle);
         mOperateWindow.show();
@@ -250,7 +268,7 @@ public class SelectableTextHelper {
                 mSpan = new BackgroundColorSpan(mSelectedColor);
             }
             mSelectionInfo.mSelectionContent = mSpannable.subSequence(mSelectionInfo.mStart, mSelectionInfo.mEnd).toString();
-            mSpannable.setSpan(mSpan, mSelectionInfo.mStart, mSelectionInfo.mEnd, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+//            mSpannable.setSpan(mSpan, mSelectionInfo.mStart, mSelectionInfo.mEnd, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             if (mSelectListener != null) {
                 mSelectListener.onTextSelected(mSelectionInfo.mSelectionContent);
             }
@@ -351,7 +369,7 @@ public class SelectableTextHelper {
         private int mCircleRadius = mCursorHandleSize / 2;
         private int mWidth = mCircleRadius * 2;
         private int mHeight = mCircleRadius * 2;
-        private int mPadding = 25;
+        private int mPadding = 0;
         private boolean isLeft;
 
         public CursorHandle(boolean isLeft) {
@@ -385,25 +403,32 @@ public class SelectableTextHelper {
 
         @Override
         public boolean onTouchEvent(MotionEvent event) {
+            boolean ret = super.onTouchEvent(event);
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
+                    System.out.println("action down");
                     mBeforeDragStart = mSelectionInfo.mStart;
                     mBeforeDragEnd = mSelectionInfo.mEnd;
                     mAdjustX = (int) event.getX();
                     mAdjustY = (int) event.getY();
+                    ret = true;
                     break;
                 case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
+                    System.out.println("action up");
+                 case MotionEvent.ACTION_CANCEL:
+                    System.out.println("action cancel");
                     mOperateWindow.show();
                     break;
                 case MotionEvent.ACTION_MOVE:
+//                    getParent().requestDisallowInterceptTouchEvent(true);
                     mOperateWindow.dismiss();
                     int rawX = (int) event.getRawX();
                     int rawY = (int) event.getRawY();
-                    update(rawX + mAdjustX - mWidth, rawY + mAdjustY - mHeight);
+                    System.out.println("action move " + rawX +"   " + rawY);
+                     update(rawX + mAdjustX - mWidth, rawY + mAdjustY - mHeight);
                     break;
             }
-            return true;
+            return ret;
         }
 
         private void changeDirection() {

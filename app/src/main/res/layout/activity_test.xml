@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ll_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <panyi.xyz.copy.library.SelectableText
+        android:id="@+id/text"
+        android:textSize="20sp"
+        android:layout_gravity="center"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:text="HelloWrold 你好世界很好好 哈兰德呀 山海经啊 哈哈哈哈哈哈哈哈哈山海经啊 哈哈哈哈哈哈哈哈哈"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        />
+
+</FrameLayout>
