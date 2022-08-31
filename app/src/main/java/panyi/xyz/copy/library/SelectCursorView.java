@@ -35,6 +35,13 @@ public class SelectCursorView extends View {
     private int tmpXY[] = new int[2];
     private Rect tmpRect = new Rect();
 
+    public float[] getXY(){
+        float[] result = new float[2];
+        result[0] = x;
+        result[1] = y;
+        return result;
+    }
+
     public SelectCursorView(Context context ,SelectableText textView, boolean isLeft) {
         super(context);
         mSelectableTextView = textView;

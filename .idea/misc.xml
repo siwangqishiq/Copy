@@ -5,10 +5,11 @@
       <map>
         <entry key="..\:/code/Copy/app/src/main/res/drawable/bg_operate_window.xml" value="0.1" />
         <entry key="..\:/code/Copy/app/src/main/res/drawable/ic_launcher_background.xml" value="0.1245" />
+        <entry key="..\:/code/Copy/app/src/main/res/drawable/triangle_ic.xml" value="0.124" />
         <entry key="..\:/code/Copy/app/src/main/res/layout/activity_main.xml" value="0.1640625" />
-        <entry key="..\:/code/Copy/app/src/main/res/layout/activity_test.xml" value="0.14666666666666667" />
+        <entry key="..\:/code/Copy/app/src/main/res/layout/activity_test.xml" value="0.22" />
         <entry key="..\:/code/Copy/app/src/main/res/layout/item_view.xml" value="0.17864583333333334" />
-        <entry key="..\:/code/Copy/app/src/main/res/layout/layout_operate_windows.xml" value="0.17864583333333334" />
+        <entry key="..\:/code/Copy/app/src/main/res/layout/layout_operate_windows.xml" value="0.5754985754985755" />
         <entry key="..\:/code/Copy/app/src/main/res/xml/menus.xml" value="0.1" />
       </map>
     </option>
