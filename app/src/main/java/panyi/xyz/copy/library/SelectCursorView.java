@@ -32,13 +32,18 @@ public class SelectCursorView extends View {
     private float lastX;
     private float lastY;
 
+    private int posX = 0;
+    private int posY = 0;
+
     private int tmpXY[] = new int[2];
     private Rect tmpRect = new Rect();
 
-    public float[] getXY(){
+    private int paintColor = Color.parseColor("#04BE02");
+
+    public float[] getPosXY(){
         float[] result = new float[2];
-        result[0] = x;
-        result[1] = y;
+        result[0] = posX;
+        result[1] = posY;
         return result;
     }
 
@@ -55,7 +60,7 @@ public class SelectCursorView extends View {
         popWindow.setHeight(SIZE);
 
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mPaint.setColor(Color.BLUE);
+        mPaint.setColor(paintColor);
     }
 
     public void show(){
@@ -117,8 +122,6 @@ public class SelectCursorView extends View {
         }
 
         LogUtil.i(TAG , "showPosX = " +showPosX +"  showPosY = " + showPosY);
-        int posX = 0;
-        int posY = 0;
         if(isLeftCursor){
             posX = (int)showPosX- popWindow.getWidth();
             posY = (int)showPosY;
@@ -187,7 +190,7 @@ public class SelectCursorView extends View {
      * @param _y
      * @return
      */
-    private float[] convertScreenToViewCoord(float _x , float _y){
+    public float[] convertScreenToViewCoord(float _x , float _y){
         float[] result = new float[2];
         mSelectableTextView.getLocationInWindow(tmpXY);
         int transX = tmpXY[0];
@@ -203,7 +206,7 @@ public class SelectCursorView extends View {
      * @param _y
      * @return
      */
-    private float[] convertViewToScreenCoord(float _x , float _y){
+    public float[] convertViewToScreenCoord(float _x , float _y){
         float[] result = new float[2];
         mSelectableTextView.getLocationInWindow(tmpXY);
         int transX = tmpXY[0];
@@ -253,5 +256,20 @@ public class SelectCursorView extends View {
         }else{
             canvas.drawRect(0 , 0 , radius , radius , mPaint);
         }
+    }
+
+    /**
+     * 切换左右
+     */
+    public void swap() {
+        isLeftCursor = !isLeftCursor;
+        invalidate();
+
+        //更新位置
+        showByCurrentPosition(false);
+    }
+
+    public boolean isLeftCursor() {
+        return isLeftCursor;
     }
 }

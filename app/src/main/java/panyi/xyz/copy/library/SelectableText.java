@@ -1,16 +1,11 @@
 package panyi.xyz.copy.library;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.os.Build;
 import android.text.Layout;
 import android.text.SpannableString;
-import android.text.SpannableStringBuilder;
 import android.text.Spanned;
-import android.text.SpannedString;
 import android.text.style.BackgroundColorSpan;
 import android.util.AttributeSet;
 import android.view.Gravity;
@@ -35,12 +30,15 @@ public class SelectableText  extends androidx.appcompat.widget.AppCompatTextView
     //操作浮框
     private OperateWindow operationWindow;
 
+    public interface SelectTextCallback{
+        void onCopy(String copyContent);
+    }
+    private SelectTextCallback mSelectCallback;
+
     private int selectBegin = 0;
     private int selectEnd = 0;
-
     //选中文本颜色
-    private int selectedBackgroundColor = Color.RED;
-
+    private int uiColor = 0xFFAFE1F4;
     //
     private int[] viewPositionInWindow = new int[2];
 
@@ -91,13 +89,78 @@ public class SelectableText  extends androidx.appcompat.widget.AppCompatTextView
         selectBegin = newBeginIndex;
         selectEnd = newEndIndex;
 
+         if(selectEnd < selectBegin){//need swap
+             LogUtil.i(TAG , "select end and begin need swap! " + selectEnd +"  " + selectBegin);
+             int tmp = selectEnd;
+            selectEnd = selectBegin;
+            selectBegin = tmp;
+
+            leftCursorView.swap();
+            rightCursorView.swap();
+         }
         // LogUtil.i(TAG , "select range change " + selectBegin +"  " + selectEnd);
         updateSelectedSpan(selectBegin , selectEnd);
 
-        if(operationWindow != null){
-            float startPoint[] = leftCursorView.getXY();
+        if(operationWindow != null && getLayout() != null && findLeftCursorView() != null){
+            float[] pos = operateWindowPosition();
+            operationWindow.updatePos((int)pos[0] , (int)pos[1]);
+        }
+    }
 
-            operationWindow.updatePos((int)startPoint[0] , (int)startPoint[1] - operationWindow.mHeight);
+    /**
+     * 计算操作浮框位置
+     * @return
+     */
+    private float[] operateWindowPosition(){
+        // LogUtil.i("startPoint" , startPoint[0] + "  " + startPoint[1]);
+        SelectCursorView leftCursor = findLeftCursorView();
+        float startPoint[] = leftCursor.getPosXY();
+        if(getLayout() == null){
+            return startPoint;
+        }
+
+        final Layout layout = getLayout();
+        int startLine = layout.getLineForOffset(selectBegin);
+        int endLine = layout.getLineForOffset(selectEnd);
+        //LogUtil.i("startPoint" , "line : " + startLine +"  " + endLine);
+        float top = layout.getLineTop(startLine) - operationWindow.mHeight;
+        float[] result = null;
+        float left = startPoint[0];
+        float right = 0;
+        if(startLine == endLine){
+            if(findRightCursorView() != null){
+                right = findRightCursorView().getPosXY()[0];
+            }
+        }else{//startLine < endLine
+            right = layout.getLineRight(startLine);
+        }
+
+        float middleX = (left + right)/2.0f;
+        result= findLeftCursorView().convertViewToScreenCoord(middleX -  operationWindow.mWidth / 2.0f , top);
+        result[0] = middleX -  operationWindow.mWidth / 2.0f;
+        return result;
+    }
+
+    private SelectCursorView findLeftCursorView(){
+        if(leftCursorView == null || rightCursorView == null){
+            return null;
+        }
+
+        if(leftCursorView.isLeftCursor()){
+            return leftCursorView;
+        }
+
+        if(rightCursorView.isLeftCursor()){
+            return rightCursorView;
+        }
+        return null;
+    }
+
+    private SelectCursorView findRightCursorView(){
+        if(findLeftCursorView() == leftCursorView){
+            return rightCursorView;
+        }else{
+            return leftCursorView;
         }
     }
 
@@ -115,7 +178,7 @@ public class SelectableText  extends androidx.appcompat.widget.AppCompatTextView
         if(getText() instanceof SpannableString){
             // LogUtil.i(TAG , "set selected span");
             SpannableString ss = (SpannableString)getText();
-            ss.setSpan(new BackgroundColorSpan(selectedBackgroundColor), start , end , Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+            ss.setSpan(new BackgroundColorSpan(uiColor), start , end , Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         }
     }
 
@@ -125,12 +188,6 @@ public class SelectableText  extends androidx.appcompat.widget.AppCompatTextView
      */
     public void showSelectable(){
         showSelectCursor();
-
-        if(operationWindow == null){
-            operationWindow = new OperateWindow(getContext());
-        }
-        operationWindow.show();
-
         addScrollListener();
     }
 
@@ -145,6 +202,19 @@ public class SelectableText  extends androidx.appcompat.widget.AppCompatTextView
 
         leftCursorView.show();
         rightCursorView.show();
+
+
+        if(operationWindow == null){
+            operationWindow = new OperateWindow(getContext());
+        }
+        float pos[] = operateWindowPosition();
+        if(operationWindow.isShowing()){
+            operationWindow.updatePos((int)pos[0] , (int)pos[1]);
+        }else{
+            operationWindow.show((int)pos[0] , (int)pos[1]);
+        }
+
+        updateSelectedSpan(selectBegin , selectEnd);
     }
 
     private void addScrollListener(){
@@ -192,7 +262,6 @@ public class SelectableText  extends androidx.appcompat.widget.AppCompatTextView
      */
     private class OperateWindow {
         private PopupWindow mWindow;
-        private int[] mTempCoors = new int[2];
 
         private int mWidth;
         private int mHeight;
@@ -221,22 +290,28 @@ public class SelectableText  extends androidx.appcompat.widget.AppCompatTextView
         }
 
         private void doCopy(){
-            String contentString = getText().toString();
+            final String contentString = getText().toString();
             try{
                 final String copyStr = contentString.substring(selectBegin , selectEnd);
                 LogUtil.i(TAG , "copy : " + copyStr);
-                //todo copy
+                if(mSelectCallback != null){
+                    mSelectCallback.onCopy(copyStr);
+                }
             }catch (Exception e){
                 e.printStackTrace();
             }
             hideSelectable();
+
+            leftCursorView = null;
+            rightCursorView = null;
         }
 
-        public void show() {
+        public void show(int _x , int _y) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 mWindow.setElevation(8.0f);
             }
-            mWindow.showAtLocation(SelectableText.this, Gravity.NO_GRAVITY, 200, 500);
+
+            mWindow.showAtLocation(SelectableText.this, Gravity.NO_GRAVITY, _x, _y);
         }
 
         /**
@@ -258,6 +333,9 @@ public class SelectableText  extends androidx.appcompat.widget.AppCompatTextView
         }
     }
 
+    public void setSelectCallback(SelectTextCallback mSelectCallback) {
+        this.mSelectCallback = mSelectCallback;
+    }
 
     /**
      *
@@ -294,7 +372,7 @@ public class SelectableText  extends androidx.appcompat.widget.AppCompatTextView
 
         int lineOfText = layout.getLineForOffset(offset);
         int xCoordinate = (int) layout.getPrimaryHorizontal(offset);
-        int yCoordinate = layout.getLineBottom(lineOfText) - 8;
+        int yCoordinate = layout.getLineBottom(lineOfText) - 4;
 
         result[0] = xCoordinate;
         result[1] = yCoordinate;
